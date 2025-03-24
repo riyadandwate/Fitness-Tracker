@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calories Prediction and Exercise Plan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            font-size: 16px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .result {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .exercise-plan {
+            margin-top: 20px;
+        }
+
+        .plan-button {
+            margin-top: 20px;
+            background-color: #007bff;
+        }
+
+        .weekly-plan {
+            margin-top: 20px;
+            background-color: #f1f1f1;
+            padding: 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="form-container">
+        <h1>Calories Prediction</h1>
+        <div id="question-box">
+            <div id="question-text"></div>
+            <div id="input-box"></div>
+        </div>
+        <button id="next-btn">Next</button>
+    </div>
+
+    <div class="container" id="result-container" style="display:none;">
+        <h1>Calories Burned</h1>
+        <div class="result" id="calories-result"></div>
+        <button id="exercise-plan-btn" class="plan-button" style="display:none;">Would you like to get an exercise plan?</button>
+    </div>
+
+    <div class="container" id="exercise-plan-container" style="display:none;">
+        <h1>Weekly Exercise Plan</h1>
+        <div class="weekly-plan" id="weekly-plan"></div>
+    </div>
+
+    <script>
+        // Variables to store user data
+        const userData = {
+            Gender: "",
+            Age: 0,
+            Height: 0,
+            Weight: 0,
+            Duration: 0,
+            Heart_Rate: 0,
+            Body_Temp: 0
+        };
+
+        let currentQuestion = 0;
+
+        // Questions array
+        const questions = [
+            {
+                text: "What is your gender?",
+                inputType: "select",
+                options: ["Male", "Female"]
+            },
+            {
+                text: "How old are you?",
+                inputType: "number"
+            },
+            {
+                text: "What is your height (in cm)?",
+                inputType: "number"
+            },
+            {
+                text: "What is your weight (in kg)?",
+                inputType: "number"
+            },
+            {
+                text: "How long is your exercise duration (in minutes)?",
+                inputType: "number"
+            },
+            {
+                text: "What is your heart rate (in bpm)?",
+                inputType: "number"
+            },
+            {
+                text: "What is your body temperature (in °C)?",
+                inputType: "number"
+            }
+        ];
+
+        // Exercise plans
+        const exercisePlans = {
+            light: {
+                name: "Light Workout Plan",
+                activities: [
+                    { day: "Monday", activity: "30 mins walking", intensity: "Low" },
+                    { day: "Tuesday", activity: "20 mins stretching", intensity: "Low" },
+                    { day: "Wednesday", activity: "30 mins cycling", intensity: "Low" },
+                    { day: "Thursday", activity: "20 mins yoga", intensity: "Low" },
+                    { day: "Friday", activity: "30 mins walking", intensity: "Low" },
+                    { day: "Saturday", activity: "Rest", intensity: "N/A" },
+                    { day: "Sunday", activity: "Light jogging", intensity: "Low" }
+                ]
+            },
+            modern: {
+                name: "Moderate Workout Plan",
+                activities: [
+                    { day: "Monday", activity: "40 mins jogging", intensity: "Moderate" },
+                    { day: "Tuesday", activity: "30 mins bodyweight exercises", intensity: "Moderate" },
+                    { day: "Wednesday", activity: "40 mins cycling", intensity: "Moderate" },
+                    { day: "Thursday", activity: "30 mins yoga", intensity: "Moderate" },
+                    { day: "Friday", activity: "40 mins jogging", intensity: "Moderate" },
+                    { day: "Saturday", activity: "Rest", intensity: "N/A" },
+                    { day: "Sunday", activity: "40 mins swimming", intensity: "Moderate" }
+                ]
+            },
+            intense: {
+                name: "Intense Workout Plan",
+                activities: [
+                    { day: "Monday", activity: "60 mins HIIT", intensity: "High" },
+                    { day: "Tuesday", activity: "45 mins weight training", intensity: "High" },
+                    { day: "Wednesday", activity: "60 mins running", intensity: "High" },
+                    { day: "Thursday", activity: "45 mins strength training", intensity: "High" },
+                    { day: "Friday", activity: "60 mins HIIT", intensity: "High" },
+                    { day: "Saturday", activity: "Rest", intensity: "N/A" },
+                    { day: "Sunday", activity: "60 mins boxing", intensity: "High" }
+                ]
+            }
+        };
+
+        // Show the next question
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            const questionText = document.getElementById("question-text");
+            const inputBox = document.getElementById("input-box");
+
+            questionText.textContent = question.text;
+            inputBox.innerHTML = "";
+
+            if (question.inputType === "select") {
+                const selectElement = document.createElement("select");
+                selectElement.id = "user-input";
+                question.options.forEach(option => {
+                    const optionElement = document.createElement("option");
+                    optionElement.value = option.toLowerCase();
+                    optionElement.textContent = option;
+                    selectElement.appendChild(optionElement);
+                });
+                inputBox.appendChild(selectElement);
+            } else {
+                const inputElement = document.createElement("input");
+                inputElement.id = "user-input";
+                inputElement.type = question.inputType;
+                inputBox.appendChild(inputElement);
+            }
+
+            // Show the button to proceed
+            const nextBtn = document.getElementById("next-btn");
+            nextBtn.textContent = currentQuestion < questions.length - 1 ? "Next" : "Calculate";
+        }
+
+        // Calculate calories burned (dummy function for now)
+        function calculateCalories() {
+            let caloriesBurned = 0;
+            if (userData.Age < 25) caloriesBurned += 300;
+            if (userData.Weight > 70) caloriesBurned += 150;
+            if (userData.Duration > 30) caloriesBurned += 100;
+            if (userData.Heart_Rate > 100) caloriesBurned += 50;
+
+            document.getElementById("calories-result").textContent = `You have burned approximately ${caloriesBurned} kcal!`;
+
+            // Show the button for exercise plan
+            const exercisePlanBtn = document.getElementById("exercise-plan-btn");
+            exercisePlanBtn.style.display = "inline-block";
+        }
+
+        // Show the exercise plan based on calories burned
+        function showExercisePlan() {
+            const caloriesBurned = parseInt(document.getElementById("calories-result").textContent.split(" ")[4]);
+            let planType;
+
+            if (caloriesBurned <= 400) planType = "light";
+            else if (caloriesBurned <= 700) planType = "modern";
+            else planType = "intense";
+
+            const plan = exercisePlans[planType];
+            let planDetails = `<strong>${plan.name}</strong><br>`;
+            plan.activities.forEach(activity => {
+                planDetails += `${activity.day}: ${activity.activity} (${activity.intensity})<br>`;
+            });
+
+            document.getElementById("weekly-plan").innerHTML = planDetails;
+            document.getElementById("exercise-plan-container").style.display = "block";
+        }
+
+        // Event listener for the "Next" button
+        document.getElementById("next-btn").addEventListener("click", function () {
+            const userInput = document.getElementById("user-input").value;
+            const question = questions[currentQuestion];
+
+            // Store user input
+            if (question.inputType === "select") {
+                userData[question.text.split(" ")[0]] = userInput;
+            } else {
+                userData[question.text.split(" ")[0]] = parseInt(userInput) || parseFloat(userInput);
+            }
+
+            currentQuestion++;
+
+            if (currentQuestion === questions.length) {
+                document.getElementById("form-container").style.display = "none";
+                document.getElementById("result-container").style.display = "block";
+                calculateCalories(); // Ensure this function gets called when "Calculate" is clicked
+            } else {
+                showQuestion();
+            }
+        });
+
+        // Event listener for the "Exercise Plan" button
+        document.getElementById("exercise-plan-btn").addEventListener("click", showExercisePlan);
+
+        // Initialize the first question
+        showQuestion();
+    </script>
+</body>
+</html>
