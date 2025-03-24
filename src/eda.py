@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Load the datasets
-calories_df = pd.read_csv(r"D:\Fitness Tracker\data\calories.csv")
-exercise_df = pd.read_csv(r"D:\Fitness Tracker\data\exercise.csv")
+calories_df = pd.read_csv("D:\Fitness Tracker\data\calories.csv")
+exercise_df = pd.read_csv("D:\Fitness Tracker\data\exercise.csv")
 
 
 # Display basic information
